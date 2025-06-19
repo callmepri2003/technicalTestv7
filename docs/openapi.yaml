@@ -1,0 +1,1703 @@
+openapi: 3.0.3
+info:
+  title: Shopping List Prediction API
+  description: |
+    A Django REST Framework system that predicts future shopping lists based on historical purchase patterns, 
+    handles missed shopping scenarios, and manages shopping list lifecycle states.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: https://api.shoppinglist.com/v1
+    description: Production server
+  - url: http://localhost:8000/api
+    description: Development server
+
+security:
+  - TokenAuth: []
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints
+  - name: Shopping Lists
+    description: Shopping list management and prediction
+  - name: Transactions
+    description: Purchase transaction management
+  - name: Products
+    description: Product management
+  - name: User Profile
+    description: User profile and preferences
+
+paths:
+  # Authentication
+  /auth/login/:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and return token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout/:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Invalidate user token
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # User Profile
+  /profile/:
+    get:
+      tags:
+        - User Profile
+      summary: Get user profile
+      description: Retrieve current user's profile and preferences
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfile'
+
+    put:
+      tags:
+        - User Profile
+      summary: Update user profile
+      description: Update user's shopping preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdate'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Shopping Lists
+  /shopping-lists/:
+    get:
+      tags:
+        - Shopping Lists
+      summary: List shopping lists
+      description: Get all shopping lists for the authenticated user
+      parameters:
+        - name: status
+          in: query
+          description: Filter by status
+          required: false
+          schema:
+            type: string
+            enum: [IN_PROGRESS, TRIAGED, PENDING, COMPLETED, EXPIRED]
+        - name: date_from
+          in: query
+          description: Filter lists from this date (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          description: Filter lists to this date (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Shopping lists retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaginatedShoppingLists'
+
+  /shopping-lists/generate/:
+    post:
+      tags:
+        - Shopping Lists
+      summary: Generate predicted shopping lists
+      description: Generate multiple future shopping lists based on historical purchase patterns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateListsRequest'
+      responses:
+        '201':
+          description: Shopping lists generated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GenerateListsResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /shopping-lists/simulate/:
+    post:
+      tags:
+        - Shopping Lists
+      summary: Simulate shopping behavior
+      description: Simulate shopping behavior patterns for testing and analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulationRequest'
+      responses:
+        '200':
+          description: Simulation completed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SimulationResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /shopping-lists/{id}/:
+    get:
+      tags:
+        - Shopping Lists
+      summary: Get shopping list details
+      description: Retrieve detailed information about a specific shopping list
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Shopping list ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Shopping list retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ShoppingListDetail'
+        '404':
+          description: Shopping list not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Shopping Lists
+      summary: Update shopping list
+      description: Update shopping list details and items
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Shopping list ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingListUpdate'
+      responses:
+        '200':
+          description: Shopping list updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ShoppingListDetail'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Shopping list not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Shopping Lists
+      summary: Delete shopping list
+      description: Delete a shopping list (only if IN_PROGRESS status)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Shopping list ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Shopping list deleted successfully
+        '400':
+          description: Cannot delete list in current status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Shopping list not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /shopping-lists/{id}/complete/:
+    post:
+      tags:
+        - Shopping Lists
+      summary: Complete shopping list
+      description: Mark a shopping list as completed and create actual transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Shopping list ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteShoppingRequest'
+      responses:
+        '200':
+          description: Shopping list completed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          shopping_list:
+                            $ref: '#/components/schemas/ShoppingListDetail'
+                          transaction:
+                            $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Cannot complete list or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Shopping list not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /shopping-lists/{id}/convert-to-transaction/:
+    post:
+      tags:
+        - Shopping Lists
+      summary: Convert expired list to estimated transaction
+      description: Convert an expired shopping list to an estimated transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Shopping list ID
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: Estimated transaction created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+        '400':
+          description: List is not expired or cannot be converted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Shopping list not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Transactions
+  /transactions/:
+    get:
+      tags:
+        - Transactions
+      summary: List transactions
+      description: Get all transactions for the authenticated user
+      parameters:
+        - name: transaction_type
+          in: query
+          description: Filter by transaction type
+          required: false
+          schema:
+            type: string
+            enum: [ACTUAL, ESTIMATED]
+        - name: date_from
+          in: query
+          description: Filter transactions from this date (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          description: Filter transactions to this date (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaginatedTransactions'
+
+    post:
+      tags:
+        - Transactions
+      summary: Create transaction
+      description: Create a new actual transaction (manual entry or receipt upload)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionRequest'
+      responses:
+        '201':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /transactions/estimate-missed/:
+    post:
+      tags:
+        - Transactions
+      summary: Estimate missed transaction
+      description: Create estimated transaction for a missed shopping date and redistribute products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateMissedRequest'
+      responses:
+        '201':
+          description: Missed transaction estimated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/EstimateMissedResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /transactions/{id}/:
+    get:
+      tags:
+        - Transactions
+      summary: Get transaction details
+      description: Retrieve detailed information about a specific transaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Transaction retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Transactions
+      summary: Update transaction
+      description: Update transaction details and products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTransactionRequest'
+      responses:
+        '200':
+          description: Transaction updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Transactions
+      summary: Delete transaction
+      description: Delete a transaction (only ACTUAL transactions can be deleted)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Transaction deleted successfully
+        '400':
+          description: Cannot delete estimated transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Products
+  /products/:
+    get:
+      tags:
+        - Products
+      summary: List products
+      description: Get all available products
+      parameters:
+        - name: search
+          in: query
+          description: Search products by name
+          required: false
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Filter by category
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaginatedProducts'
+
+    post:
+      tags:
+        - Products
+      summary: Create product
+      description: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /products/frequencies/:
+    get:
+      tags:
+        - Products
+      summary: Get product frequencies
+      description: Get calculated purchase frequencies for user's products
+      responses:
+        '200':
+          description: Product frequencies retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ProductFrequency'
+
+    post:
+      tags:
+        - Products
+      summary: Refresh product frequencies
+      description: Recalculate product purchase frequencies based on current transaction history
+      responses:
+        '200':
+          description: Product frequencies refreshed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          updated_products:
+                            type: integer
+                          calculation_date:
+                            type: string
+                            format: date-time
+
+  /products/{id}/:
+    get:
+      tags:
+        - Products
+      summary: Get product details
+      description: Retrieve detailed information about a specific product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    TokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+
+  schemas:
+    # Base Response Schemas
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+        errors:
+          type: "null"
+          example: null
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        data:
+          type: "null"
+          example: null
+        message:
+          type: string
+          example: "Validation failed"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    # Authentication
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                token:
+                  type: string
+                  example: "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b"
+                user:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    username:
+                      type: string
+                    email:
+                      type: string
+                      format: email
+
+    # User Profile
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+            username:
+              type: string
+            email:
+              type: string
+              format: email
+        preferred_shopping_day:
+          type: integer
+          minimum: 0
+          maximum: 6
+          description: "0=Monday, 6=Sunday"
+        preferred_shopping_frequency:
+          type: string
+          enum: [WEEKLY, FORTNIGHTLY, MONTHLY, CUSTOM]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        preferred_shopping_day:
+          type: integer
+          minimum: 0
+          maximum: 6
+        preferred_shopping_frequency:
+          type: string
+          enum: [WEEKLY, FORTNIGHTLY, MONTHLY, CUSTOM]
+
+    # Products
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        default_unit:
+          type: string
+          example: "item"
+        created_at:
+          type: string
+          format: date-time
+
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        category:
+          type: string
+          maxLength: 100
+        default_unit:
+          type: string
+          maxLength: 20
+          default: "item"
+
+    ProductFrequency:
+      type: object
+      properties:
+        id:
+          type: integer
+        product:
+          $ref: '#/components/schemas/Product'
+        average_interval_days:
+          type: integer
+        frequency_category:
+          type: string
+          enum: [WEEKLY, FORTNIGHTLY, MONTHLY, CUSTOM]
+        last_purchase_date:
+          type: string
+          format: date
+        total_purchases:
+          type: integer
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        last_calculated:
+          type: string
+          format: date-time
+
+    # Transactions
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        transaction_date:
+          type: string
+          format: date
+        transaction_type:
+          type: string
+          enum: [ACTUAL, ESTIMATED]
+        total_amount:
+          type: number
+          format: decimal
+          example: 45.67
+        receipt_image:
+          type: string
+          format: uri
+          nullable: true
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionProduct'
+        created_at:
+          type: string
+          format: date-time
+
+    TransactionProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+        product:
+          $ref: '#/components/schemas/Product'
+        quantity:
+          type: number
+          format: decimal
+        unit_price:
+          type: number
+          format: decimal
+          nullable: true
+        total_price:
+          type: number
+          format: decimal
+          nullable: true
+
+    CreateTransactionRequest:
+      type: object
+      required:
+        - transaction_date
+        - products
+      properties:
+        transaction_date:
+          type: string
+          format: date
+        total_amount:
+          type: number
+          format: decimal
+          nullable: true
+        receipt_image:
+          type: string
+          format: binary
+          nullable: true
+        products:
+          type: array
+          items:
+            type: object
+            required:
+              - product_id
+              - quantity
+            properties:
+              product_id:
+                type: integer
+              quantity:
+                type: number
+                format: decimal
+              unit_price:
+                type: number
+                format: decimal
+                nullable: true
+
+    UpdateTransactionRequest:
+      type: object
+      properties:
+        transaction_date:
+          type: string
+          format: date
+        total_amount:
+          type: number
+          format: decimal
+          nullable: true
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+              product_id:
+                type: integer
+              quantity:
+                type: number
+                format: decimal
+              unit_price:
+                type: number
+                format: decimal
+                nullable: true
+
+    # Shopping Lists
+    ShoppingList:
+      type: object
+      properties:
+        id:
+          type: integer
+        scheduled_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [IN_PROGRESS, TRIAGED, PENDING, COMPLETED, EXPIRED]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ShoppingListDetail:
+      allOf:
+        - $ref: '#/components/schemas/ShoppingList'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ShoppingListItem'
+
+    ShoppingListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        product:
+          $ref: '#/components/schemas/Product'
+        predicted_quantity:
+          type: number
+          format: decimal
+        actual_quantity:
+          type: number
+          format: decimal
+          nullable: true
+        is_purchased:
+          type: boolean
+        predicted_price:
+          type: number
+          format: decimal
+          nullable: true
+        notes:
+          type: string
+
+    ShoppingListUpdate:
+      type: object
+      properties:
+        scheduled_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [IN_PROGRESS, TRIAGED, PENDING, COMPLETED, EXPIRED]
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: "Item ID for updates, omit for new items"
+              product_id:
+                type: integer
+              predicted_quantity:
+                type: number
+                format: decimal
+              actual_quantity:
+                type: number
+                format: decimal
+                nullable: true
+              is_purchased:
+                type: boolean
+              predicted_price:
+                type: number
+                format: decimal
+                nullable: true
+              notes:
+                type: string
+
+    CompleteShoppingRequest:
+      type: object
+      required:
+        - items
+      properties:
+        total_amount:
+          type: number
+          format: decimal
+          nullable: true
+        receipt_image:
+          type: string
+          format: binary
+          nullable: true
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - item_id
+              - actual_quantity
+              - is_purchased
+            properties:
+              item_id:
+                type: integer
+              actual_quantity:
+                type: number
+                format: decimal
+              is_purchased:
+                type: boolean
+              unit_price:
+                type: number
+                format: decimal
+                nullable: true
+
+    # API Request/Response Schemas
+    GenerateListsRequest:
+      type: object
+      properties:
+        num_lists:
+          type: integer
+          minimum: 1
+          maximum: 12
+          default: 4
+        start_date:
+          type: string
+          format: date
+          nullable: true
+
+    GenerateListsResponse:
+      type: object
+      properties:
+        created_lists:
+          type: integer
+        lists:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShoppingListDetail'
+
+    EstimateMissedRequest:
+      type: object
+      required:
+        - missed_date
+      properties:
+        missed_date:
+          type: string
+          format: date
+
+    EstimateMissedResponse:
+      type: object
+      properties:
+        estimated_transaction:
+          $ref: '#/components/schemas/Transaction'
+        redistributed_items:
+          type: array
+          items:
+            type: object
+            properties:
+              product:
+                type: string
+              quantity:
+                type: number
+                format: decimal
+              target_date:
+                type: string
+                format: date
+              action:
+                type: string
+                enum: [created, updated]
+        total_missed_products:
+          type: integer
+
+    SimulationRequest:
+      type: object
+      required:
+        - num_lists
+        - start_date
+        - completion_pattern
+      properties:
+        num_lists:
+          type: integer
+          minimum: 1
+          maximum: 12
+        start_date:
+          type: string
+          format: date
+        completion_pattern:
+          type: array
+          items:
+            type: boolean
+          minItems: 1
+          maxItems: 12
+
+    SimulationResponse:
+      type: object
+      properties:
+        simulated_lists:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              scheduled_date:
+                type: string
+                format: date
+              status:
+                type: string
+                enum: [COMPLETED, EXPIRED]
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    product:
+                      $ref: '#/components/schemas/Product'
+                    quantity:
+                      type: number
+                      format: decimal
+                    source:
+                      type: string
+                      enum: [predicted, redistributed]
+                      nullable: true
+        final_pending_products:
+          type: integer
+        completion_rate:
+          type: number
+          format: float
+          description: "Percentage of missed shopping trips"
+
+    # Pagination Schemas
+    PaginationMeta:
+      type: object
+      properties:
+        count:
+          type: integer
+          description: "Total number of items"
+        next:
+          type: string
+          format: uri
+          nullable: true
+          description: "URL to next page"
+        previous:
+          type: string
+          format: uri
+          nullable: true
+          description: "URL to previous page"
+        page_size:
+          type: integer
+          description: "Number of items per page"
+        current_page:
+          type: integer
+          description: "Current page number"
+        total_pages:
+          type: integer
+          description: "Total number of pages"
+
+    PaginatedShoppingLists:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShoppingList'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedTransactions:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedProducts:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+  responses:
+    # Common Error Responses
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            data: null
+            message: "Validation failed"
+            errors:
+              field_name: ["This field is required."]
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            data: null
+            message: "Resource not found"
+            errors: null
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            data: null
+            message: "Authentication credentials were not provided"
+            errors: null
+
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            data: null
+            message: "You do not have permission to perform this action"
+            errors: null
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            data: null
+            message: "An internal server error occurred"
+            errors: null
+
+  examples:
+    # Shopping List Examples
+    ShoppingListExample:
+      summary: Example shopping list
+      value:
+        success: true
+        message: "Shopping list retrieved successfully"
+        errors: null
+        data:
+          id: 1
+          scheduled_date: "2024-01-15"
+          status: "TRIAGED"
+          created_at: "2024-01-10T10:00:00Z"
+          updated_at: "2024-01-10T10:00:00Z"
+          completed_at: null
+          items:
+            - id: 1
+              product:
+                id: 1
+                name: "Milk"
+                category: "Dairy"
+                default_unit: "litre"
+              predicted_quantity: 2.0
+              actual_quantity: null
+              is_purchased: false
+              predicted_price: 3.50
+              notes: ""
+            - id: 2
+              product:
+                id: 2
+                name: "Bread"
+                category: "Bakery"
+                default_unit: "item"
+              predicted_quantity: 1.0
+              actual_quantity: null
+              is_purchased: false
+              predicted_price: 2.80
+              notes: "Whole wheat preferred"
+
+    # Transaction Examples
+    TransactionExample:
+      summary: Example transaction
+      value:
+        success: true
+        message: "Transaction retrieved successfully"
+        errors: null
+        data:
+          id: 1
+          transaction_date: "2024-01-10"
+          transaction_type: "ACTUAL"
+          total_amount: 45.67
+          receipt_image: "https://api.example.com/media/receipts/receipt_1.jpg"
+          created_at: "2024-01-10T14:30:00Z"
+          products:
+            - id: 1
+              product:
+                id: 1
+                name: "Milk"
+                category: "Dairy"
+                default_unit: "litre"
+              quantity: 2.0
+              unit_price: 3.50
+              total_price: 7.00
+            - id: 2
+              product:
+                id: 15
+                name: "Chicken Breast"
+                category: "Meat"
+                default_unit: "kg"
+              quantity: 1.5
+              unit_price: 12.99
+              total_price: 19.49
+
+    # Generate Lists Examples
+    GenerateListsRequestExample:
+      summary: Generate 6 shopping lists starting next week
+      value:
+        num_lists: 6
+        start_date: "2024-01-22"
+
+    GenerateListsResponseExample:
+      summary: Successfully generated shopping lists
+      value:
+        success: true
+        message: "Shopping lists generated successfully"
+        errors: null
+        data:
+          created_lists: 4
+          lists:
+            - id: 10
+              scheduled_date: "2024-01-22"
+              status: "IN_PROGRESS"
+              created_at: "2024-01-15T09:00:00Z"
+              updated_at: "2024-01-15T09:00:00Z"
+              completed_at: null
+              items:
+                - id: 25
+                  product:
+                    id: 1
+                    name: "Milk"
+                    category: "Dairy"
+                    default_unit: "litre"
+                  predicted_quantity: 2.0
+                  actual_quantity: null
+                  is_purchased: false
+                  predicted_price: 3.50
+                  notes: ""
+
+    # Simulation Examples
+    SimulationRequestExample:
+      summary: Simulate 4 shopping trips with 2 missed
+      value:
+        num_lists: 4
+        start_date: "2024-01-22"
+        completion_pattern: [true, false, true, false]
+
+    SimulationResponseExample:
+      summary: Simulation results showing redistribution
+      value:
+        success: true
+        message: "Simulation completed successfully"
+        errors: null
+        data:
+          simulated_lists:
+            - id: 1
+              scheduled_date: "2024-01-22"
+              status: "COMPLETED"
+              items:
+                - product:
+                    id: 1
+                    name: "Milk"
+                    category: "Dairy"
+                  quantity: 2.0
+                  source: "predicted"
+            - id: 2
+              scheduled_date: "2024-01-29"
+              status: "EXPIRED"
+              items: []
+            - id: 3
+              scheduled_date: "2024-02-05"
+              status: "COMPLETED"
+              items:
+                - product:
+                    id: 1
+                    name: "Milk"
+                    category: "Dairy"
+                  quantity: 2.0
+                  source: "predicted"
+                - product:
+                    id: 2
+                    name: "Bread"
+                    category: "Bakery"
+                  quantity: 1.0
+                  source: "redistributed"
+          final_pending_products: 0
+          completion_rate: 0.5
+
+    # Error Examples
+    ValidationErrorExample:
+      summary: Validation error example
+      value:
+        success: false
+        data: null
+        message: "Validation failed"
+        errors:
+          start_date: ["Start date cannot be in the past"]
+          num_lists: ["Ensure this value is less than or equal to 12"]
+
+    BusinessRuleErrorExample:
+      summary: Business rule violation
+      value:
+        success: false
+        data: null
+        message: "Cannot complete shopping list"
+        errors:
+          status: ["Shopping list must be in TRIAGED or PENDING status to complete"]
+
+# Additional webhook endpoints for real-time updates (optional)
+webhooks:
+  shoppingListStatusChanged:
+    post:
+      summary: Shopping list status changed
+      description: Triggered when a shopping list status changes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  example: "shopping_list.status_changed"
+                timestamp:
+                  type: string
+                  format: date-time
+                data:
+                  type: object
+                  properties:
+                    shopping_list_id:
+                      type: integer
+                    old_status:
+                      type: string
+                    new_status:
+                      type: string
+                    user_id:
+                      type: integer
+      responses:
+        '200':
+          description: Webhook received successfully
+
+  transactionCreated:
+    post:
+      summary: New transaction created
+      description: Triggered when a new transaction is created
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  example: "transaction.created"
+                timestamp:
+                  type: string
+                  format: date-time
+                data:
+                  type: object
+                  properties:
+                    transaction_id:
+                      type: integer
+                    transaction_type:
+                      type: string
+                    user_id:
+                      type: integer
+                    total_amount:
+                      type: number
+                      format: decimal
+      responses:
+        '200':
+          description: Webhook received successfully
