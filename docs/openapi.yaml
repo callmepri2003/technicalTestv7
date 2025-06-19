@@ -133,7 +133,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   # Shopping Lists
-  /shopping-lists/:
+  /shopping-lists:
     get:
       tags:
         - Shopping Lists
@@ -444,7 +444,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   # Transactions
-  /transactions/:
+  /transactions:
     get:
       tags:
         - Transactions
