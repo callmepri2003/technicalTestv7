@@ -43,6 +43,9 @@ backend/
 ├── products/            # Product catalog
 ├── transactions/        # Transaction tracking
 ├── profiles/            # User profiles
+├── docs/               # API documentation
+│   ├── index.html      # Documentation homepage
+│   └── openapi.yaml    # OpenAPI specification
 ├── media/              # Uploaded files (receipts)
 ├── backend/            # Main project settings
 └── manage.py
@@ -92,6 +95,42 @@ backend/
    ```
 
 The API will be available at `http://localhost:8000/`
+
+7. **Serve API Documentation** (optional)
+   ```bash
+   # Install serve globally if you don't have it
+   npm install -g serve
+   
+   # Serve the documentation
+   npx serve docs
+   ```
+   
+   The API documentation will be available at `http://localhost:3000/` (or the port shown in terminal)
+
+## 📚 API Documentation
+
+Interactive API documentation is available in the `docs/` folder:
+
+- **`docs/index.html`** - Interactive documentation homepage
+- **`docs/openapi.yaml`** - Complete OpenAPI specification
+
+### Viewing Documentation
+
+To serve the documentation locally:
+
+```bash
+# Option 1: Using npx (recommended)
+npx serve docs
+
+# Option 2: If you have serve installed globally
+serve docs
+
+# Option 3: Using Python's built-in server
+cd docs
+python -m http.server 3000
+```
+
+The documentation will be available at `http://localhost:3000/` (or the port shown in your terminal).
 
 ## API Endpoints
 
