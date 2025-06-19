@@ -2,6 +2,8 @@
 
 ## Technical Test for Cloud Ascension Global
 
+![API Screenshot](screenshot.png)
+
 A Django REST API for managing shopping lists, products, transactions, and user profiles. This application allows users to create, manage, and track their shopping activities with features like predicted pricing, actual purchase tracking, and transaction history.
 
 ## 🎯 Key Deliverable Endpoints
