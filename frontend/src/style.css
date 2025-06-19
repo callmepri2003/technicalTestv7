@@ -297,3 +297,212 @@ body {
   color: #777;
   margin-top: 50px;
 }
+
+.hidden-form-container {
+  display: none;
+  /* Hidden by default */
+}
+
+/* Style for the form container when it's visible */
+#generate-list-form-container {
+  margin-top: 40px;
+  padding: 30px;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  animation: fadeIn 0.3s ease-out;
+  /* Optional: add a fade-in animation */
+}
+
+/* Secondary button style for "Cancel" */
+.button-secondary {
+  background-color: #6c757d;
+  /* A gray color */
+}
+
+.button-secondary:hover {
+  background-color: #5a6268;
+}
+
+/* Add this to the end of your @keyframes block or where you define animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detail-section {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.detail-section p {
+  margin: 8px 0;
+  font-size: 1.05em;
+  color: #444;
+}
+
+.detail-section strong {
+  color: #222;
+}
+
+/* For smaller cards within detail views (e.g., list items, transaction products) */
+.small-card {
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.03);
+}
+
+.small-card p {
+  font-size: 0.9em;
+  margin: 3px 0;
+}
+
+.small-card strong {
+  font-size: 0.95em;
+}
+
+.hidden-form-container {
+  display: none;
+  /* Hidden by default */
+  background-color: #f0f2f5;
+  padding: 25px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.05);
+}
+
+.hidden-form-container.active {
+  /* Use JavaScript to add/remove this class */
+  display: block;
+}
+
+.small-input {
+  padding: 8px 10px;
+  font-size: 0.9em;
+}
+
+.shopping-list-item-card .input-group {
+  margin-bottom: 0;
+  /* Adjust spacing within item cards */
+}
+
+.shopping-list-item-card .label {
+  margin-bottom: 2px;
+}
+
+.small-info {
+  font-size: 0.85em;
+  color: #666;
+  margin-top: -10px;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.textarea {
+  min-height: 250px;
+  resize: vertical;
+  font-family: 'Consolas', 'Monaco', monospace;
+  /* Monospace font for JSON */
+  white-space: pre;
+  /* Preserve whitespace for JSON formatting */
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
+.description-text {
+  background-color: #f8f9fa;
+  border-left: 5px solid #007bff;
+  padding: 15px;
+  margin-bottom: 30px;
+  font-size: 0.9em;
+  line-height: 1.6;
+  color: #333;
+}
+
+.description-text strong {
+  color: #0056b3;
+}
+
+.add-new-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.add-new-section .button {
+  margin-bottom: 15px;
+}
+
+.sub-heading {
+  font-size: 1.4em;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.product-card .card-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.product-card .edit-form-container {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.product-card .edit-form-container .input-group {
+  margin-bottom: 10px;
+}
+
+.product-card .edit-form-container .button {
+  margin-right: 10px;
+}
+
+.product-card .edit-form-container h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #555;
+  font-size: 1.1em;
+}
+
+.message.success,
+.message.error {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 0.9em;
+}
+
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}

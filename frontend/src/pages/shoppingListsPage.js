@@ -2,7 +2,7 @@
 import { getShoppingLists } from '../api/shoppingList';
 import { renderLoadingSpinner, removeLoadingSpinner } from '../components/loadingSpinner';
 
-export async function renderShoppingListsPage(targetElement) {
+export async function renderShoppingListsPage(targetElement, navigate) { // Pass navigate to use it
     renderLoadingSpinner(targetElement);
 
     try {
@@ -23,9 +23,8 @@ export async function renderShoppingListsPage(targetElement) {
                             <h3 class="card-title">List #${list.id}</h3>
                             <p><strong>Scheduled Date:</strong> ${list.scheduled_date}</p>
                             <p><strong>Status:</strong> <span class="${statusClass}">${list.status.replace('_', ' ')}</span></p>
-                            <p><strong>Created:</strong> ${new Date(list.created_at).toLocaleDateString()}</p>
-                            <p><strong>Completed:</strong> ${completedDate}</p>
-                            <button class="card-button">View Details</button>
+                            ${list.completed_at ? `<p><strong>Completed:</strong> ${completedDate}</p>` : ''}
+                            <button class="card-button view-details-btn" data-id="${list.id}">View Details</button>
                         </div>
                     `;
                 }).join('');
@@ -38,6 +37,17 @@ export async function renderShoppingListsPage(targetElement) {
                     ${listHtml}
                 </div>
             `;
+
+            // NEW: Add event listeners for "View Details" buttons
+            targetElement.querySelectorAll('.view-details-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    if (id) {
+                        navigate(`shopping-lists/${id}`);
+                    }
+                });
+            });
+
         } else {
             targetElement.innerHTML = `<div class="container"><p class="message error">Error: ${response.message}</p></div>`;
         }

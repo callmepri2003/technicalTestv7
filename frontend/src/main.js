@@ -1,29 +1,34 @@
 // src/main.js
-import './style.css'; // Import global styles
+import './style.css';
 import { renderHeader } from './components/header';
 import { renderLoginPage } from './pages/loginPage';
 import { renderDashboardPage } from './pages/dashboardPage';
 import { renderShoppingListsPage } from './pages/shoppingListsPage';
+import { renderShoppingListDetailPage } from './pages/shoppingListDetailPage';
 import { renderTransactionsPage } from './pages/transactionsPage';
+import { renderTransactionDetailPage } from './pages/transactionDetailPage';
+import { renderUserProfilePage } from './pages/userProfilePage';
+import { renderProductsPage } from './pages/productsPage';
+import { renderUploadTransactionsPage } from './pages/uploadTransactionsPage'; // NEW IMPORT
 import { isAuthenticated } from './utils/authUtils';
 
 const appHeader = document.getElementById('app-header');
 const appContent = document.getElementById('app-content');
 
-// Function to clear content and render a page
 const renderPage = async (path) => {
-  appContent.innerHTML = ''; // Clear previous content
+  appContent.innerHTML = '';
 
-  // Check authentication for protected routes
-  const authRequiredRoutes = ['dashboard', 'shopping-lists', 'transactions'];
-  const currentRoute = path.split('/')[0]; // Get the base route (e.g., 'dashboard' from 'dashboard/123')
+  const pathParts = path.split('/');
+  const baseRoute = pathParts[0];
+  const id = pathParts[1];
 
-  if (authRequiredRoutes.includes(currentRoute) && !isAuthenticated()) {
-    window.location.hash = '#login'; // Redirect to login if not authenticated
+  const authRequiredRoutes = ['dashboard', 'shopping-lists', 'transactions', 'profile', 'products', 'upload-transactions']; // Add 'upload-transactions'
+  if (authRequiredRoutes.includes(baseRoute) && !isAuthenticated()) {
+    window.location.hash = '#login';
     return;
   }
 
-  switch (currentRoute) {
+  switch (baseRoute) {
     case 'login':
       renderLoginPage(appContent, navigate, () => renderHeader(appHeader, navigate));
       break;
@@ -31,12 +36,33 @@ const renderPage = async (path) => {
       renderDashboardPage(appContent, navigate);
       break;
     case 'shopping-lists':
-      await renderShoppingListsPage(appContent);
+      if (id) {
+        await renderShoppingListDetailPage(appContent, id);
+      } else {
+        await renderShoppingListsPage(appContent, navigate);
+      }
       break;
     case 'transactions':
-      await renderTransactionsPage(appContent);
+      if (id) {
+        await renderTransactionDetailPage(appContent, id);
+      } else {
+        await renderTransactionsPage(appContent, navigate);
+      }
       break;
-    case '': // Default route (e.g., when visiting just '/')
+    case 'profile':
+      await renderUserProfilePage(appContent);
+      break;
+    case 'products':
+      if (id) {
+        await renderProductDetailPage(appContent, id);
+      } else {
+        await renderProductsPage(appContent, navigate);
+      }
+      break;
+    case 'upload-transactions': // NEW ROUTE
+        await renderUploadTransactionsPage(appContent, navigate);
+        break;
+    case '':
       window.location.hash = '#dashboard';
       break;
     default:
@@ -45,20 +71,15 @@ const renderPage = async (path) => {
   }
 };
 
-// Simple hash-based router
 const navigate = (path) => {
   window.location.hash = `#${path}`;
 };
 
-// Handle initial load and hash changes
 const handleRouteChange = () => {
-  const path = window.location.hash.substring(1) || ''; // Remove '#' and get path
+  const path = window.location.hash.substring(1) || '';
   renderHeader(appHeader, navigate); // Always render header based on current auth state
   renderPage(path);
 };
 
-// Listen for hash changes
 window.addEventListener('hashchange', handleRouteChange);
-
-// Initial route render
 handleRouteChange();

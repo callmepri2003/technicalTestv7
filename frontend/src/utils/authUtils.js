@@ -14,3 +14,14 @@ export const removeAuthToken = () => {
 export const isAuthenticated = () => {
   return !!getAuthToken();
 };
+
+// Example function for logging in (assuming you have one)
+export const login = (token) => {
+    localStorage.setItem('authToken', token);
+};
+
+// This is the missing piece! Ensure your logout function is exported.
+export const logout = () => {
+    localStorage.removeItem('authToken');
+    // You might also clear other session-related data here
+};

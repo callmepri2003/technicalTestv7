@@ -1,32 +1,31 @@
 // src/components/header.js
-import { isAuthenticated, removeAuthToken } from '../utils/authUtils';
+import { isAuthenticated, logout } from '../utils/authUtils';
 
 export function renderHeader(targetElement, navigate) {
-    const loggedIn = isAuthenticated();
+    const authenticated = isAuthenticated();
     targetElement.innerHTML = `
-        <header class="header">
-            <a href="#dashboard" class="logo">🛒 SmartList</a>
-            <nav>
-                <ul class="nav-list">
-                    ${loggedIn ? `
-                        <li><a href="#dashboard" class="nav-link">Dashboard</a></li>
-                        <li><a href="#shopping-lists" class="nav-link">Shopping Lists</a></li>
-                        <li><a href="#transactions" class="nav-link">Transactions</a></li>
-                        <li><button id="logout-button" class="logout-button">Logout</button></li>
-                    ` : `
-                        <li><a href="#login" class="nav-link">Login</a></li>
-                    `}
-                </ul>
-            </nav>
-        </header>
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <a href="#dashboard" class="logo">Budget Planner</a>
+            </div>
+            <ul class="navbar-menu">
+                ${authenticated ? `
+                    <li><a href="#dashboard">Dashboard</a></li>
+                    <li><a href="#shopping-lists">Shopping Lists</a></li>
+                    <li><a href="#transactions">Transactions</a></li>
+                    <li><a href="#products">Products</a></li> <li><a href="#profile">Profile</a></li>
+                    <li><button id="logout-btn" class="nav-button">Logout</button></li>
+                ` : `
+                    <li><a href="#login" class="nav-button">Login</a></li>
+                `}
+            </ul>
+        </nav>
     `;
 
-    if (loggedIn) {
-        const logoutButton = targetElement.querySelector('#logout-button');
-        logoutButton.addEventListener('click', () => {
-            removeAuthToken();
+    if (authenticated) {
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            logout();
             navigate('login');
-            renderHeader(targetElement, navigate); // Re-render header after logout
         });
     }
 }
