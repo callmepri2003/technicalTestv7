@@ -148,10 +148,11 @@ class ShoppingListService:
         transaction = Transaction.objects.create(
             user=shopping_list.user,
             transaction_type='ACTUAL',
-            date=date.today(),
+            transaction_date=date.today(),
             total_amount=completion_data.get('total_amount', Decimal('0.00')),
-            description=f"Shopping completed for list {shopping_list.id}"
+            shopping_list=shopping_list
         )
+
         
         # Add transaction products
         for item in shopping_list.items.filter(is_purchased=True):
@@ -171,18 +172,19 @@ class ShoppingListService:
         """Convert expired shopping list to estimated transaction"""
         if shopping_list.status != 'EXPIRED':
             raise ValueError("Only expired shopping lists can be converted")
-        
+
+        # Calculate total amount
+        total_amount = sum(item.predicted_total for item in shopping_list.items.all() if item.predicted_price)
+
         # Create estimated transaction
-        total_amount = sum(item.predicted_total for item in shopping_list.items.all())
-        
         transaction = Transaction.objects.create(
             user=shopping_list.user,
             transaction_type='ESTIMATED',
-            date=shopping_list.scheduled_date,
+            transaction_date=shopping_list.scheduled_date,
             total_amount=total_amount,
-            description=f"Estimated transaction from expired list {shopping_list.id}"
+            shopping_list=shopping_list
         )
-        
+
         # Add transaction products
         for item in shopping_list.items.all():
             if item.predicted_price:
@@ -190,8 +192,7 @@ class ShoppingListService:
                     transaction=transaction,
                     product=item.product,
                     quantity=item.predicted_quantity,
-                    unit_price=item.predicted_price,
-                    total_price=item.predicted_total
+                    unit_price=item.predicted_price
                 )
-        
+
         return transaction

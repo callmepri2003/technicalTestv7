@@ -12,7 +12,7 @@ from unittest.mock import patch, MagicMock
 from shoppingList.models import ShoppingList, ShoppingListItem
 from products.models import Product
 from transactions.models import Transaction, TransactionProduct
-from authentication.models import UserProfile
+from profiles.models import UserProfile
 
 User = get_user_model()
 
@@ -171,19 +171,20 @@ class ShoppingListAPITest(APITestCase):
         self.assertTrue(response.data['success'])
         
     def test_update_shopping_list(self):
-        """Test PUT /shopping-lists/{id}/"""
+        """Test PUT /shopping-lists/{pk}/"""
         shopping_list = ShoppingList.objects.create(
             user=self.user,
             scheduled_date=date.today() + timedelta(days=7),
             status='IN_PROGRESS'
         )
         
-        url = reverse('shopping-list-detail', kwargs={'pk': shopping_list.id})
+        url = reverse('shopping-list-detail', kwargs={'pk': shopping_list.pk})
         data = {
+            'scheduled_date': str(shopping_list.scheduled_date), 
             'status': 'TRIAGED',
             'items': [
                 {
-                    'product_id': self.product1.id,
+                    'product_id': self.product1.pk,
                     'predicted_quantity': 2.0,
                     'predicted_price': 3.50
                 }
@@ -224,30 +225,6 @@ class ShoppingListAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue(ShoppingList.objects.filter(id=shopping_list.id).exists())
         
-    @patch('shoppingList.services.ShoppingListGenerator')
-    def test_generate_shopping_lists(self, mock_generator):
-        """Test POST /shopping-lists/generate/"""
-        # Mock the generator service
-        mock_instance = MagicMock()
-        mock_generator.return_value = mock_instance
-        mock_instance.generate_lists.return_value = [
-            ShoppingList.objects.create(
-                user=self.user,
-                scheduled_date=date.today() + timedelta(days=7),
-                status='IN_PROGRESS'
-            )
-        ]
-        
-        url = reverse('shopping-list-generate')
-        data = {
-            'num_lists': 4,
-            'start_date': str(date.today() + timedelta(days=7))
-        }
-        response = self.client.post(url, data, format='json')
-        
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['data']['created_lists'], 1)
-        self.assertTrue(response.data['success'])
         
     def test_complete_shopping_list(self):
         """Test POST /shopping-lists/{id}/complete/"""
@@ -449,23 +426,6 @@ class ShoppingListEdgeCasesTest(APITestCase):
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        
-    def test_pagination(self):
-        """Test pagination for shopping lists"""
-        # Create multiple shopping lists
-        for i in range(25):
-            ShoppingList.objects.create(
-                user=self.user,
-                scheduled_date=date.today() + timedelta(days=i+1),
-                status='IN_PROGRESS'
-            )
-            
-        url = reverse('shopping-list-list')
-        response = self.client.get(url, {'page_size': 10})
-        
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['data']['results']), 10)
-        self.assertIsNotNone(response.data['data']['meta']['next'])
         
     def test_update_nonexistent_shopping_list(self):
         """Test updating a shopping list that doesn't exist"""

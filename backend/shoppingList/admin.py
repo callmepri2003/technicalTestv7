@@ -6,11 +6,12 @@ from .models import ShoppingList, ShoppingListItem
 class ShoppingListItemInline(admin.TabularInline):
     model = ShoppingListItem
     extra = 0
-    readonly_fields = ['created_at', 'updated_at']
-    fields = [
-        'product', 'predicted_quantity', 'predicted_price',
-        'actual_quantity', 'unit_price', 'is_purchased'
-    ]
+    # readonly_fields = ['created_at', 'updated_at']
+    # fields = [
+    #     'shopping_list',
+    #     'product', 'predicted_quantity', 'predicted_price',
+    #     'actual_quantity', 'unit_price', 'is_purchased'
+    # ]
 
 
 @admin.register(ShoppingList)
@@ -20,8 +21,8 @@ class ShoppingListAdmin(admin.ModelAdmin):
         'item_count', 'created_at', 'completed_at'
     ]
     list_filter = ['status', 'scheduled_date', 'created_at']
-    search_fields = ['user__username', 'user__email']
-    readonly_fields = ['created_at', 'updated_at', 'completed_at']
+    # search_fields = ['user__username', 'user__email']
+    # readonly_fields = ['created_at', 'updated_at', 'completed_at']
     inlines = [ShoppingListItemInline]
     
     fieldsets = (
@@ -49,8 +50,8 @@ class ShoppingListItemAdmin(admin.ModelAdmin):
         'predicted_price', 'is_purchased', 'created_at'
     ]
     list_filter = ['is_purchased', 'shopping_list__status', 'product__category', 'created_at']
-    search_fields = ['product__name', 'shopping_list__user__username']
-    readonly_fields = ['created_at', 'updated_at']
+    # search_fields = ['product__name', 'shopping_list__user__username']
+    # readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
         (None, {

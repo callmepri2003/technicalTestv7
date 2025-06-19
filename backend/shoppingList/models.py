@@ -48,9 +48,6 @@ class ShoppingListItem(models.Model):
     is_purchased = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        unique_together = ['shopping_list', 'product']
         
     def __str__(self):
         return f"{self.product.name} x {self.predicted_quantity}"

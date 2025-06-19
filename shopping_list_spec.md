@@ -1,5 +1,3 @@
-Mine:
-
 # Shopping List Prediction System - Complete Technical Specification
 
 ## Overview
