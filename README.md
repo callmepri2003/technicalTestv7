@@ -77,12 +77,12 @@ backend/
 
 3. **Install dependencies**
    ```bash
-   pip install django djangorestframework django-cors-headers pillow
+   pip install -r requirements.txt
    ```
 
 4. **Run migrations**
    ```bash
-   python manage.py makemigrations
+   python manage.py makemigrations authentication transactions products shoppingList profiles
    python manage.py migrate
    ```
 
